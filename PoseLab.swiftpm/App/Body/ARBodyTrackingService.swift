@@ -73,7 +73,7 @@ final class ARBodyTrackingService: NSObject, ARSessionDelegate {
         posePublisher.send(
             PoseSnapshot(
                 timestamp: session.currentFrame?.timestamp ?? 0,
-                estimatedScaleFactor: Float(body.estimatedScaleFactor),
+                estimatedScaleFactor: body.estimatedScaleFactor,
                 bodyTransform: body.transform,
                 joints: joints
             )
