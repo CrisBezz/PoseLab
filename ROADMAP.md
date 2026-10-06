@@ -2,13 +2,20 @@
 
 ## Body V0.1 — Live Skeleton
 - [x] iPad Swift Playgrounds app package
-- [x] camera capability
 - [x] ARKit body tracking
-- [x] normalized pose
 - [x] live joints + bones
 - [x] freeze / resume
 
-## Body V0.2 — Known Character
+## Body V0.2a — Remote Camera
+- [x] Local / Camera / Monitor modes
+- [x] iPhone pose broadcaster
+- [x] iPad nearby-device discovery
+- [x] live pose packets
+- [x] remote skeleton preview
+- [ ] remote video thumbnail
+- [ ] monitor-side camera controls
+
+## Body V0.2b — Known Character
 - [ ] bundled rigged humanoid
 - [ ] explicit joint mapping
 - [ ] rest-pose correction
@@ -28,7 +35,6 @@
 - [ ] floor lock
 - [ ] foot stabilization
 - [ ] manual cleanup
-- [ ] pose library
 
 ## Body V0.5 — Assisted Auto-Rig
 - [ ] humanoid detection

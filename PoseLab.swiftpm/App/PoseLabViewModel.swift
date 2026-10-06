@@ -3,20 +3,42 @@ import Foundation
 
 @MainActor
 final class PoseLabViewModel: ObservableObject {
+    enum Mode: String, CaseIterable, Identifiable {
+        case local = "Local"
+        case camera = "iPhone Camera"
+        case monitor = "iPad Monitor"
+
+        var id: String { rawValue }
+    }
+
+    @Published var mode: Mode = .local
     @Published private(set) var isSessionRunning = false
     @Published private(set) var isTracking = false
     @Published private(set) var isFrozen = false
     @Published private(set) var latestPose: PoseSnapshot?
+    @Published private(set) var remoteStatus = "Remote off"
 
     let trackingService = ARBodyTrackingService()
+    let remoteLink = RemotePoseLink()
+
     private var cancellables = Set<AnyCancellable>()
+    private var lastRemoteSendTime: TimeInterval = 0
 
     init() {
         trackingService.posePublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] pose in
                 guard let self else { return }
+
                 isTracking = true
+
+                if mode == .camera {
+                    let now = pose.timestamp
+                    if now - lastRemoteSendTime >= 0.05 {
+                        remoteLink.send(pose)
+                        lastRemoteSendTime = now
+                    }
+                }
 
                 guard !isFrozen else { return }
                 latestPose = pose
@@ -29,6 +51,26 @@ final class PoseLabViewModel: ObservableObject {
                 self?.isTracking = false
             }
             .store(in: &cancellables)
+
+        remoteLink.remotePosePublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] pose in
+                guard let self,
+                      mode == .monitor,
+                      !isFrozen
+                else { return }
+
+                latestPose = pose
+                isTracking = true
+            }
+            .store(in: &cancellables)
+
+        remoteLink.statusPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] status in
+                self?.remoteStatus = status
+            }
+            .store(in: &cancellables)
     }
 
     var jointCount: Int {
@@ -36,35 +78,102 @@ final class PoseLabViewModel: ObservableObject {
     }
 
     var statusText: String {
-        if !trackingService.isSupported {
-            return "Body tracking unsupported on this device"
+        if isFrozen { return "Pose frozen" }
+
+        switch mode {
+        case .local:
+            if !trackingService.isSupported {
+                return "Body tracking unsupported on this device"
+            }
+            if isTracking { return "Tracking performer" }
+            if isSessionRunning { return "Looking for performer…" }
+            return "Tracking stopped"
+
+        case .camera:
+            if !trackingService.isSupported {
+                return "Body tracking unsupported on this device"
+            }
+            if isTracking { return remoteStatus }
+            return "Camera: looking for performer…"
+
+        case .monitor:
+            return remoteStatus
         }
-        if isFrozen {
-            return "Pose frozen"
+    }
+
+    func activateCurrentMode() {
+        switchMode(to: mode)
+    }
+
+    func switchMode(to newMode: Mode) {
+        trackingService.stop()
+        remoteLink.stop()
+
+        mode = newMode
+        isSessionRunning = false
+        isTracking = false
+        isFrozen = false
+        latestPose = nil
+        trackingService.isFrozen = false
+
+        switch newMode {
+        case .local:
+            trackingService.start()
+            isSessionRunning = true
+
+        case .camera:
+            remoteLink.startCamera()
+            trackingService.start()
+            isSessionRunning = true
+
+        case .monitor:
+            remoteLink.startMonitor()
+            isSessionRunning = true
         }
-        if isTracking {
-            return "Tracking performer"
-        }
-        if isSessionRunning {
-            return "Looking for performer…"
-        }
-        return "Tracking stopped"
     }
 
     func toggleTracking() {
-        if isSessionRunning {
-            trackingService.stop()
-            isSessionRunning = false
-            isTracking = false
-        } else {
-            trackingService.start()
-            isSessionRunning = true
+        switch mode {
+        case .local:
+            if isSessionRunning {
+                trackingService.stop()
+                isSessionRunning = false
+                isTracking = false
+            } else {
+                trackingService.start()
+                isSessionRunning = true
+            }
+
+        case .camera:
+            if isSessionRunning {
+                trackingService.stop()
+                remoteLink.stop()
+                isSessionRunning = false
+                isTracking = false
+            } else {
+                remoteLink.startCamera()
+                trackingService.start()
+                isSessionRunning = true
+            }
+
+        case .monitor:
+            if isSessionRunning {
+                remoteLink.stop()
+                isSessionRunning = false
+                isTracking = false
+            } else {
+                remoteLink.startMonitor()
+                isSessionRunning = true
+            }
         }
     }
 
     func toggleFreeze() {
         guard isTracking || isFrozen else { return }
         isFrozen.toggle()
-        trackingService.isFrozen = isFrozen
+
+        if mode != .monitor {
+            trackingService.isFrozen = isFrozen
+        }
     }
 }
