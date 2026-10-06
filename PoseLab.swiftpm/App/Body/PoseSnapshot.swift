@@ -9,7 +9,7 @@ struct PoseSnapshot {
     }
 
     let timestamp: TimeInterval
-    let estimatedScaleFactor: Float
+    let estimatedScaleFactor: CGFloat
     let bodyTransform: simd_float4x4
     let joints: [String: Joint]
 }
