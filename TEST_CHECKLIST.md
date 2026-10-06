@@ -1,13 +1,18 @@
 # PoseLab Manual Test Checklist
 
-## V0.1 Live Skeleton
-- [ ] App launches on supported physical device.
+## Body V0.1 — iPad
+- [ ] PoseLab.swiftpm opens in Swift Playgrounds.
+- [ ] Project compiles on the iPad.
 - [ ] Camera permission prompt appears.
 - [ ] Rear camera opens.
 - [ ] Status changes to Tracking performer.
 - [ ] Joint count becomes non-zero.
-- [ ] Joint spheres follow arms, torso, hips and legs.
+- [ ] White joint markers appear.
+- [ ] White bone lines form a stick skeleton.
+- [ ] Raise left arm: skeleton follows.
+- [ ] Raise right arm: skeleton follows.
+- [ ] Squat: hips/knees/ankles follow.
+- [ ] Torso turn follows sensibly.
 - [ ] Freeze Pose stops updates.
 - [ ] Resume restarts updates.
-- [ ] Tracking loss/reacquisition behaves sensibly.
-- [ ] Landscape UI is usable on iPad.
+- [ ] Landscape UI is usable.

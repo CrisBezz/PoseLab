@@ -1,5 +1,5 @@
-import Foundation
 import Combine
+import Foundation
 
 @MainActor
 final class PoseLabViewModel: ObservableObject {
@@ -16,24 +16,38 @@ final class PoseLabViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] pose in
                 guard let self else { return }
-                self.isTracking = true
-                guard !self.isFrozen else { return }
-                self.latestPose = pose
+                isTracking = true
+
+                guard !isFrozen else { return }
+                latestPose = pose
             }
             .store(in: &cancellables)
 
         trackingService.trackingLostPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] in self?.isTracking = false }
+            .sink { [weak self] in
+                self?.isTracking = false
+            }
             .store(in: &cancellables)
     }
 
-    var jointCount: Int { latestPose?.joints.count ?? 0 }
+    var jointCount: Int {
+        latestPose?.joints.count ?? 0
+    }
 
     var statusText: String {
-        if isFrozen { return "Pose frozen" }
-        if isTracking { return "Tracking performer" }
-        if isSessionRunning { return "Looking for performer…" }
+        if !trackingService.isSupported {
+            return "Body tracking unsupported on this device"
+        }
+        if isFrozen {
+            return "Pose frozen"
+        }
+        if isTracking {
+            return "Tracking performer"
+        }
+        if isSessionRunning {
+            return "Looking for performer…"
+        }
         return "Tracking stopped"
     }
 

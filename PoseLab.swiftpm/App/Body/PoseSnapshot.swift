@@ -1,10 +1,11 @@
 import Foundation
 import simd
 
-struct PoseSnapshot: Sendable {
-    struct Joint: Sendable {
+struct PoseSnapshot {
+    struct Joint {
         let name: String
         let modelTransform: simd_float4x4
+        let parentName: String?
     }
 
     let timestamp: TimeInterval

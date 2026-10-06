@@ -1,22 +1,36 @@
 # PoseLab AI Handoff
 
+## Current state
+Body V0.1 has been converted to an iPad-native Swift Playgrounds app project.
+
+## Canonical app
+`PoseLab.swiftpm`
+
+## Active module
+PoseLab Body.
+
+## Reserved module
+PoseLab Face remains a first-class architectural track. Do not collapse facial work into Body code.
+
 ## Current milestone
-ARKit performer tracking → normalized PoseLab pose → visible debug skeleton.
+Open on iPad → run → ARKit body tracking → white joint/bone skeleton overlay → Freeze / Resume.
 
-## Implemented
-- SwiftUI app shell
-- ARBodyTrackingConfiguration
-- ARBodyAnchor capture
-- PoseSnapshot
-- RealityKit joint-sphere visualization
-- tracking status + joint count
-- freeze/resume
+## Immediate user test
+Open `PoseLab.swiftpm` in Swift Playgrounds on a supported physical iPad and verify:
+- rear camera launches
+- performer is detected
+- joint count becomes non-zero
+- skeleton follows body
+- Freeze and Resume work
 
-## Immediate next task
-Run V0.1 on a supported physical iPad/iPhone and verify tracking.
-
-After PASS:
-V0.2 Known Character — bundled rigged humanoid, explicit source→target map, rest-pose correction, live rotation retargeting, Freeze Pose.
+## After PASS
+Body V0.2:
+- bundle one known rigged humanoid character
+- explicit ARKit → target joint map
+- rest-pose correction
+- live rotation retargeting
+- preserve target proportions
+- Freeze character pose
 
 ## Product rule
-Prefer rotation retargeting. Preserve character-native bone lengths and stylized proportions.
+The performer drives pose. Character-native bone lengths and stylized proportions remain unchanged.
