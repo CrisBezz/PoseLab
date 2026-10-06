@@ -53,7 +53,7 @@ struct ContentView: View {
             .padding()
         }
         .overlay(alignment: .topLeading) {
-            Text("PoseLab Body · V0.2a")
+            Text("PoseLab Body · V0.2b")
                 .font(.caption.weight(.semibold))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 7)
@@ -74,7 +74,10 @@ struct ContentView: View {
             BodyTrackingView(service: model.trackingService)
 
         case .monitor:
-            RemotePosePreview(pose: model.latestPose)
+            RemotePosePreview(
+                pose: model.latestPose,
+                previewImage: model.remotePreviewImage
+            )
         }
     }
 

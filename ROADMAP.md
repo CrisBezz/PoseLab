@@ -6,40 +6,36 @@
 - [x] live joints + bones
 - [x] freeze / resume
 
-## Body V0.2a — Remote Camera
+## Body V0.2 — Remote Camera / Monitor
 - [x] Local / Camera / Monitor modes
 - [x] iPhone pose broadcaster
 - [x] iPad nearby-device discovery
 - [x] live pose packets
 - [x] remote skeleton preview
-- [ ] remote video thumbnail
-- [ ] monitor-side camera controls
+- [x] low-bandwidth remote camera preview
+- [ ] iPad → iPhone Freeze / Resume command
+- [ ] connection quality indicator
 
-## Body V0.2b — Known Character
+## Body V0.3 — Known Character
 - [ ] bundled rigged humanoid
 - [ ] explicit joint mapping
 - [ ] rest-pose correction
 - [ ] live rotation retargeting
 - [ ] freeze character pose
 
-## Body V0.3 — Import
+## Body V0.4 — Import
 - [ ] document picker
 - [ ] USDZ first
 - [ ] skeleton inspection
 - [ ] editable mapping
 - [ ] mapping presets
 
-## Body V0.4 — Pose Quality
+## Body V0.5 — Pose Quality / Assisted Rig
 - [ ] smoothing
 - [ ] joint limits
 - [ ] floor lock
 - [ ] foot stabilization
-- [ ] manual cleanup
-
-## Body V0.5 — Assisted Auto-Rig
-- [ ] humanoid detection
-- [ ] user correction points
-- [ ] skeleton fitting
+- [ ] assisted skeleton fitting
 - [ ] auto skin weighting
 
 ## Face V0.1

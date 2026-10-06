@@ -1,17 +1,18 @@
 # PoseLab Development History
 
+## 2026-10-06 — Body V0.2b Remote Monitor Preview
+- Added low-bandwidth rear-camera JPEG preview stream from iPhone.
+- Added typed remote message framing so pose and preview data coexist.
+- Preview throttled to ~5 fps and 640 px maximum dimension.
+- Pose transmission remains ~20 Hz and independent of preview frames.
+- iPad Monitor now shows full-screen remote camera preview plus live skeleton inset.
+- Preserved Local and Camera modes.
+
 ## 2026-10-06 — Body V0.2a Remote Camera foundation
 - Added Local / iPhone Camera / iPad Monitor modes.
-- Added automatic nearby device discovery and connection.
-- Added Codable PosePacket transport.
-- Added ~20 Hz remote pose sending.
-- Added iPad remote 2D stick-skeleton preview.
-- Added Swift Playgrounds local-network/Bonjour capabilities.
-- Preserved the working local ARKit path.
-- Kept Multipeer Connectivity isolated behind RemotePoseLink for later migration to Network framework.
+- Added automatic nearby discovery and connection.
+- Added Codable pose transport and remote stick-skeleton preview.
 
-## 2026-10-06 — Body V0.1 iPad conversion
-- Converted canonical app to PoseLab.swiftpm for Swift Playgrounds on iPad.
-- Added camera capability.
-- Added live ARKit joint + bone skeleton visualization.
-- Reserved Face module boundary.
+## 2026-10-06 — Body V0.1
+- Built iPad Swift Playgrounds app.
+- Added ARKit body tracking, joints/bones, Freeze / Resume.

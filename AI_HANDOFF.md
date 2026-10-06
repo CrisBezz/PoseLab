@@ -1,7 +1,7 @@
 # PoseLab AI Handoff
 
 ## Current state
-Body V0.2a Remote Camera foundation is on main.
+Body V0.2b Remote Monitor Preview is on main.
 
 ## Canonical app
 `PoseLab.swiftpm`
@@ -14,27 +14,30 @@ PoseLab Face remains a first-class architectural track.
 
 ## Current Body modes
 - Local — existing rear-camera ARKit skeleton on the current device.
-- iPhone Camera — rear-camera ARKit capture plus nearby pose broadcast.
-- iPad Monitor — discovers the nearby PoseLab camera and renders the received skeleton without using the iPad rear camera.
+- iPhone Camera — ARKit body capture + pose broadcast + low-bandwidth camera preview.
+- iPad Monitor — receives the camera preview and pose stream, displaying the preview full-screen with a skeleton inset.
 
 ## Remote architecture
-ARKit tracking and pose transport are separated.
-`RemotePoseLink` currently uses Multipeer Connectivity as an MVP transport. It is intentionally isolated because Apple has deprecated Multipeer Connectivity in favour of Network framework.
+Pose and camera-preview traffic are separate message types.
+- Pose: approximately 20 Hz, unreliable.
+- Camera monitor JPEG: approximately 5 Hz, max dimension 640 px, JPEG quality ~0.38.
 
-Pose packets are transport-safe Codable data and do not expose ARKit types to the link layer.
+Tracking remains authoritative. Preview frames are disposable and must never stall pose processing.
+
+`RemotePoseLink` currently uses Multipeer Connectivity only as the MVP transport boundary.
 
 ## Immediate test
-Install/run the same PoseLab.swiftpm build on iPhone and iPad:
+Run the same build on iPhone and iPad:
 1. iPhone → iPhone Camera.
 2. iPad → iPad Monitor.
-3. Allow Local Network permission on both devices.
-4. Devices should discover/connect automatically.
-5. Stand in view of the iPhone rear camera.
-6. iPad should show the live stick skeleton and joint count.
+3. Allow Local Network permission.
+4. Wait for Connected status.
+5. Confirm live camera preview appears on iPad.
+6. Confirm skeleton inset and joint count update independently.
+7. Move quickly and verify pose remains responsive even if preview is choppy.
 
 ## Next after PASS
-- remote camera thumbnail/video experiment;
-- remote Freeze command;
+- remote Freeze command so iPad can freeze the iPhone capture itself;
 - known-character retargeting on the iPad monitor.
 
 ## Product rule

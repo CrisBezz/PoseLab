@@ -1,13 +1,21 @@
 import ARKit
 import Combine
+import CoreImage
 import Foundation
+import ImageIO
+import UIKit
 
 final class ARBodyTrackingService: NSObject, ARSessionDelegate {
     let posePublisher = PassthroughSubject<PoseSnapshot, Never>()
+    let previewFramePublisher = PassthroughSubject<Data, Never>()
     let trackingLostPublisher = PassthroughSubject<Void, Never>()
 
     let session = ARSession()
     var isFrozen = false
+    var previewEnabled = false
+
+    private let imageContext = CIContext()
+    private var lastPreviewTime: TimeInterval = 0
 
     var isSupported: Bool {
         ARBodyTrackingConfiguration.isSupported
@@ -35,6 +43,17 @@ final class ARBodyTrackingService: NSObject, ARSessionDelegate {
 
     func stop() {
         session.pause()
+    }
+
+    func session(_ session: ARSession, didUpdate frame: ARFrame) {
+        guard previewEnabled else { return }
+
+        let now = frame.timestamp
+        guard now - lastPreviewTime >= 0.20 else { return }
+        lastPreviewTime = now
+
+        guard let data = makePreviewJPEG(from: frame.capturedImage) else { return }
+        previewFramePublisher.send(data)
     }
 
     func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {
@@ -88,5 +107,46 @@ final class ARBodyTrackingService: NSObject, ARSessionDelegate {
 
     func session(_ session: ARSession, didFailWithError error: Error) {
         trackingLostPublisher.send()
+    }
+
+    private func makePreviewJPEG(from pixelBuffer: CVPixelBuffer) -> Data? {
+        var image = CIImage(cvPixelBuffer: pixelBuffer)
+        image = image.oriented(previewOrientation())
+
+        let extent = image.extent
+        guard extent.width > 0, extent.height > 0 else { return nil }
+
+        let maximumDimension: CGFloat = 640
+        let scale = min(
+            1,
+            maximumDimension / max(extent.width, extent.height)
+        )
+
+        if scale < 1 {
+            image = image.transformed(
+                by: CGAffineTransform(scaleX: scale, y: scale)
+            )
+        }
+
+        guard let cgImage = imageContext.createCGImage(
+            image,
+            from: image.extent
+        ) else { return nil }
+
+        return UIImage(cgImage: cgImage)
+            .jpegData(compressionQuality: 0.38)
+    }
+
+    private func previewOrientation() -> CGImagePropertyOrientation {
+        switch UIDevice.current.orientation {
+        case .landscapeLeft:
+            return .down
+        case .landscapeRight:
+            return .up
+        case .portraitUpsideDown:
+            return .left
+        default:
+            return .right
+        }
     }
 }

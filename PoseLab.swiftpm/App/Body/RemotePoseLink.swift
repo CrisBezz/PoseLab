@@ -10,7 +10,13 @@ final class RemotePoseLink: NSObject {
         case monitor
     }
 
+    private enum MessageKind: UInt8 {
+        case pose = 1
+        case previewJPEG = 2
+    }
+
     let remotePosePublisher = PassthroughSubject<PoseSnapshot, Never>()
+    let remotePreviewPublisher = PassthroughSubject<UIImage, Never>()
     let statusPublisher = CurrentValueSubject<String, Never>("Remote off")
 
     private let serviceType = "poselab-body"
@@ -75,15 +81,38 @@ final class RemotePoseLink: NSObject {
         else { return }
 
         do {
-            let data = try JSONEncoder().encode(PosePacket(snapshot: pose))
-            try session.send(
-                data,
-                toPeers: session.connectedPeers,
-                with: .unreliable
-            )
+            let payload = try JSONEncoder().encode(PosePacket(snapshot: pose))
+            try send(payload, kind: .pose, mode: .unreliable)
         } catch {
             statusPublisher.send("Pose send failed")
         }
+    }
+
+    func sendPreviewJPEG(_ data: Data) {
+        guard role == .camera,
+              !session.connectedPeers.isEmpty
+        else { return }
+
+        do {
+            try send(data, kind: .previewJPEG, mode: .unreliable)
+        } catch {
+            statusPublisher.send("Preview send failed")
+        }
+    }
+
+    private func send(
+        _ payload: Data,
+        kind: MessageKind,
+        mode: MCSessionSendDataMode
+    ) throws {
+        var data = Data([kind.rawValue])
+        data.append(payload)
+
+        try session.send(
+            data,
+            toPeers: session.connectedPeers,
+            with: mode
+        )
     }
 
     private func connectedText() -> String {
@@ -170,11 +199,24 @@ extension RemotePoseLink: MCSessionDelegate {
         fromPeer peerID: MCPeerID
     ) {
         guard role == .monitor,
-              let packet = try? JSONDecoder().decode(PosePacket.self, from: data),
-              let snapshot = packet.snapshot()
+              let first = data.first,
+              let kind = MessageKind(rawValue: first)
         else { return }
 
-        remotePosePublisher.send(snapshot)
+        let payload = Data(data.dropFirst())
+
+        switch kind {
+        case .pose:
+            guard let packet = try? JSONDecoder().decode(PosePacket.self, from: payload),
+                  let snapshot = packet.snapshot()
+            else { return }
+
+            remotePosePublisher.send(snapshot)
+
+        case .previewJPEG:
+            guard let image = UIImage(data: payload) else { return }
+            remotePreviewPublisher.send(image)
+        }
     }
 
     func session(

@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import UIKit
 
 @MainActor
 final class PoseLabViewModel: ObservableObject {
@@ -17,6 +18,7 @@ final class PoseLabViewModel: ObservableObject {
     @Published private(set) var isFrozen = false
     @Published private(set) var latestPose: PoseSnapshot?
     @Published private(set) var remoteStatus = "Remote off"
+    @Published private(set) var remotePreviewImage: UIImage?
 
     let trackingService = ARBodyTrackingService()
     let remoteLink = RemotePoseLink()
@@ -45,6 +47,14 @@ final class PoseLabViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
+        trackingService.previewFramePublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] jpegData in
+                guard let self, mode == .camera else { return }
+                remoteLink.sendPreviewJPEG(jpegData)
+            }
+            .store(in: &cancellables)
+
         trackingService.trackingLostPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in
@@ -62,6 +72,14 @@ final class PoseLabViewModel: ObservableObject {
 
                 latestPose = pose
                 isTracking = true
+            }
+            .store(in: &cancellables)
+
+        remoteLink.remotePreviewPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] image in
+                guard let self, mode == .monitor else { return }
+                remotePreviewImage = image
             }
             .store(in: &cancellables)
 
@@ -107,6 +125,7 @@ final class PoseLabViewModel: ObservableObject {
 
     func switchMode(to newMode: Mode) {
         trackingService.stop()
+        trackingService.previewEnabled = false
         remoteLink.stop()
 
         mode = newMode
@@ -114,6 +133,7 @@ final class PoseLabViewModel: ObservableObject {
         isTracking = false
         isFrozen = false
         latestPose = nil
+        remotePreviewImage = nil
         trackingService.isFrozen = false
 
         switch newMode {
@@ -123,6 +143,7 @@ final class PoseLabViewModel: ObservableObject {
 
         case .camera:
             remoteLink.startCamera()
+            trackingService.previewEnabled = true
             trackingService.start()
             isSessionRunning = true
 
@@ -147,11 +168,13 @@ final class PoseLabViewModel: ObservableObject {
         case .camera:
             if isSessionRunning {
                 trackingService.stop()
+                trackingService.previewEnabled = false
                 remoteLink.stop()
                 isSessionRunning = false
                 isTracking = false
             } else {
                 remoteLink.startCamera()
+                trackingService.previewEnabled = true
                 trackingService.start()
                 isSessionRunning = true
             }
@@ -159,6 +182,7 @@ final class PoseLabViewModel: ObservableObject {
         case .monitor:
             if isSessionRunning {
                 remoteLink.stop()
+                remotePreviewImage = nil
                 isSessionRunning = false
                 isTracking = false
             } else {
